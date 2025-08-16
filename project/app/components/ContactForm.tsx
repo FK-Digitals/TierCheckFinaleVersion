@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react';
@@ -20,6 +22,7 @@ export default function ContactForm() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const petTypes = [
     'Hund', 'Katze', 'Kaninchen', 'Vogel', 'Hamster', 'Meerschweinchen', 
@@ -29,23 +32,40 @@ export default function ContactForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate form submission
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          website: '' // Honeypot
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data?.ok) {
+        setIsSubmitted(true);
+        // Reset form after 3 seconds
+        setTimeout(() => {
+          setIsSubmitted(false);
+          setFormData({
+            name: '',
+            email: '',
+            subject: '',
+            message: '',
+            petType: ''
+          });
+        }, 3000);
+      } else {
+        setError('Senden fehlgeschlagen. Bitte später erneut versuchen.');
+      }
+    } catch (err) {
+      setError('Netzwerkfehler. Bitte erneut versuchen.');
+    } finally {
       setIsSubmitting(false);
-      setIsSubmitted(true);
-      // Reset form after 3 seconds
-      setTimeout(() => {
-        setIsSubmitted(false);
-        setFormData({
-          name: '',
-          email: '',
-          subject: '',
-          message: '',
-          petType: ''
-        });
-      }, 3000);
-    }, 1500);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -81,6 +101,9 @@ export default function ContactForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Honeypot */}
+        <input type="text" name="website" autoComplete="off" tabIndex={-1} className="hidden" aria-hidden="true" />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -181,6 +204,10 @@ export default function ContactForm() {
             </>
           )}
         </motion.button>
+
+        {error && (
+          <p className="text-red-600 text-sm mt-2">{error}</p>
+        )}
       </form>
 
       {/* Contact Info */}
