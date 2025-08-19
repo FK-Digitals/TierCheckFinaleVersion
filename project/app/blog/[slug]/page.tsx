@@ -299,11 +299,13 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
   const [canUseNativeShare, setCanUseNativeShare] = useState(false);
 
   // Check if native share is supported
-  useEffect(() => {
-   if (typeof window !== 'undefined' && typeof navigator.share === 'function') {
-      setCanUseNativeShare(true);
-    }
-  }, []);
+useEffect(() => {
+  const supported =
+    typeof window !== 'undefined' &&
+    typeof (navigator as any).share === 'function';
+
+  setCanUseNativeShare(supported);
+}, []);
 
   // Share functions
   const handleShare = () => {
@@ -384,27 +386,32 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
     }
   };
 
-  useEffect(() => {
-    const fetchPost = () => {
-      const allPosts = getBlogPosts();
-      // Check if user is admin (logged in)
-      const isAdmin = typeof window !== 'undefined' && localStorage.getItem('adminAuth') === 'true';
-      
-      let foundPost;
-      if (isAdmin) {
-        // Admin can see all posts (including drafts)
-        foundPost = allPosts.find(post => post.slug === params.slug);
-      } else {
-        // Regular users only see published posts
-        foundPost = allPosts.find(post => post.slug === params.slug && post.status === 'published');
-      }
-      
-      setPost(foundPost || null);
-      setIsLoading(false);
-    };
+useEffect(() => {
+  let mounted = true;
 
-    fetchPost();
-  }, [params.slug]);
+  const run = async () => {
+    const allPosts = await getBlogPosts();
+    const isAdmin =
+      typeof window !== 'undefined' &&
+      localStorage.getItem('adminAuth') === 'true';
+
+    const found = allPosts.find(
+      (post: BlogPost) =>
+        post.slug === params.slug && (isAdmin || post.status === 'published')
+    );
+
+    if (mounted) {
+      setPost(found ?? null);
+      setIsLoading(false);
+    }
+  };
+
+  run();
+  return () => {
+    mounted = false;
+  };
+}, [params.slug]);
+
 
   if (isLoading) {
     return (

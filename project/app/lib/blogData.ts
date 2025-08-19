@@ -1,10 +1,12 @@
+import { supabase } from '@/lib/supabaseClient';
+
 export interface BlogPost {
-  id: number;
+  id: string;               // UUID from DB
   title: string;
   excerpt: string;
   content: string;
-  author: string;
-  date: string;
+  author: string | null;
+  date: string;             // ISO string
   category: string;
   image: string;
   status: 'draft' | 'published';
@@ -20,16 +22,18 @@ export interface AffiliateProduct {
   title: string;
   description: string;
   price: string;
+  image?: string;
+  url?: string;
+  badge?: string;
+  buttonLabel?: string;
+  buttonIcon?: string;
+  buttonAnimation?: string;
   originalPrice?: string;
-  image: string;
-  rating: number;
-  url: string;
+  rating?: number;
   buttonText?: string;
   buttonColor?: string;
   buttonStyle?: string;
   buttonSize?: string;
-  buttonIcon?: string;
-  buttonAnimation?: string;
 }
 
 export interface AnimalType {
@@ -39,116 +43,85 @@ export interface AnimalType {
   color: string;
 }
 
-// Static blog posts (original articles)
+const mapFromDb = (row: any): BlogPost => ({
+  id: row.id,
+  title: row.title,
+  excerpt: row.excerpt ?? '',
+  content: row.content ?? '',
+  author: row.author ?? null,
+  date: row.created_at ?? row.date ?? new Date().toISOString(),
+  category: row.category ?? '',
+  image: row.image ?? '',
+  status: (row.status as 'draft' | 'published') ?? 'published',
+  likes: row.likes ?? 0,
+  comments: row.comments ?? 0,
+  slug: row.slug,
+  readTime: row.read_time ?? '',
+  affiliateProducts: row.affiliate_products ?? undefined,
+  animalType: row.animal_type ?? undefined,
+});
+
+const mapToDb = (p: BlogPost) => ({
+  id: p.id,
+  title: p.title,
+  excerpt: p.excerpt,
+  content: p.content,
+  author: p.author,
+  category: p.category,
+  image: p.image,
+  status: p.status,
+  likes: p.likes,
+  comments: p.comments,
+  slug: p.slug,
+  read_time: p.readTime,
+  animal_type: p.animalType,
+  affiliate_products: p.affiliateProducts ?? null,
+});
+
+export const getBlogPosts = async (): Promise<BlogPost[]> => {
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(mapFromDb);
+};
+
+export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapFromDb(data) : null;
+};
+
+// Accepts a full array for backward compatibility. Performs upsert by slug.
+export const saveBlogPosts = async (posts: BlogPost[]): Promise<void> => {
+  if (!Array.isArray(posts) || posts.length === 0) return;
+  const upserts = posts.map(mapToDb);
+  const { error } = await supabase
+    .from('blog_posts')
+    .upsert(upserts, { onConflict: 'slug' });
+  if (error) throw error;
+};
+
+// Animal types stored in table animal_types
+export const getAnimalTypes = async (): Promise<AnimalType[]> => {
+  const { data, error } = await supabase
+    .from('animal_types')
+    .select('*')
+    .order('id', { ascending: true });
+  if (error) throw error;
+  return (data || []) as AnimalType[];
+};
+
+export const saveAnimalTypes = async (types: AnimalType[]): Promise<void> => {
+  const { error } = await supabase
+    .from('animal_types')
+    .upsert(types.map(t => ({ id: t.id, name: t.name, icon: t.icon, color: t.color })), { onConflict: 'id' });
+  if (error) throw error;
+};
+
 export const staticBlogPosts: BlogPost[] = [];
-
-// Default animal types
-export const defaultAnimalTypes: AnimalType[] = [
-  { id: 1, name: 'Katzen', icon: '🐱', color: 'from-purple-600 to-pink-600' },
-  { id: 2, name: 'Hunde', icon: '🐕', color: 'from-blue-600 to-indigo-600' },
-  { id: 3, name: 'Vögel', icon: '🐦', color: 'from-green-600 to-emerald-600' },
-  { id: 4, name: 'Kleintiere', icon: '🐹', color: 'from-yellow-600 to-orange-600' },
-  { id: 5, name: 'Reptilien', icon: '🦎', color: 'from-teal-600 to-cyan-600' },
-  { id: 6, name: 'Fische', icon: '🐠', color: 'from-cyan-600 to-blue-600' }
-];
-
-// Animal types management functions
-export const getAnimalTypes = (): AnimalType[] => {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('animalTypes');
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (error) {
-        console.error('Error parsing animal types:', error);
-      }
-    }
-  }
-  return defaultAnimalTypes;
-};
-
-export const saveAnimalTypes = (animalTypes: AnimalType[]) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('animalTypes', JSON.stringify(animalTypes));
-  }
-};
-
-// Blog data management functions
-export const getBlogPosts = (): BlogPost[] => {
-  if (typeof window !== 'undefined') {
-    const storedPosts = localStorage.getItem('blogPosts');
-    if (storedPosts) {
-      try {
-        const parsedPosts = JSON.parse(storedPosts);
-        // Merge with static posts to ensure we have all data
-        const allPosts = [...staticBlogPosts];
-        
-        // Add or update posts from localStorage
-        parsedPosts.forEach((storedPost: BlogPost) => {
-          const existingIndex = allPosts.findIndex(p => p.id === storedPost.id);
-          if (existingIndex >= 0) {
-            // Update existing post but keep static content if missing
-            allPosts[existingIndex] = {
-              ...allPosts[existingIndex],
-              ...storedPost,
-              content: storedPost.content || allPosts[existingIndex].content
-            };
-          } else {
-            // Add new post
-            allPosts.push(storedPost);
-          }
-        });
-        
-        return allPosts;
-      } catch (error) {
-        console.error('Error parsing blog posts from localStorage:', error);
-      }
-    }
-  }
-  // Return static posts if no localStorage data
-  return staticBlogPosts;
-};
-
-export const getBlogPostBySlug = (slug: string): BlogPost | null => {
-  const allPosts = getBlogPosts();
-  
-  // Check if request comes from admin area
-  const isAdminAccess = typeof window !== 'undefined' && 
-    (window.location.pathname.includes('/admin') || 
-     document.referrer.includes('/admin') ||
-     localStorage.getItem('adminAuth') === 'true');
-  
-  if (isAdminAccess) {
-    // Admin can see all posts (including drafts)
-    return allPosts.find(post => post.slug === slug) || null;
-  } else {
-    // Public users only see published posts
-    return allPosts.find(post => post.slug === slug && post.status === 'published') || null;
-  }
-};
-
-export const saveBlogPosts = (posts: BlogPost[]) => {
-  if (typeof window !== 'undefined') {
-    try {
-      // Only save new posts (not static ones) to save space
-      const newPosts = posts.filter(post => !staticBlogPosts.find(sp => sp.id === post.id));
-      
-      const dataToSave = JSON.stringify(newPosts);
-      
-      localStorage.setItem('blogPosts', dataToSave);
-      console.log('✅ Blog posts saved successfully:', newPosts.length, 'new posts');
-      
-    } catch (error) {
-      console.error('Error saving blog posts:', error);
-      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-        alert('❌ Browser-Speicher ist voll! Für Offline-Tests mit großen Bildern verwende Firefox oder erhöhe das localStorage-Limit in den Browser-Entwicklertools.');
-      } else {
-        if (error instanceof Error) {
-          alert('Fehler beim Speichern: ' + error.message);
-        } else {
-          alert('Ein unbekannter Fehler ist beim Speichern aufgetreten.');
-        }
-      }
-    }
-  }
-};

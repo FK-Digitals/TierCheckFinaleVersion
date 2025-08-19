@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 
 // Diese Werte findest du in deinem Supabase Dashboard unter "Project Settings" -> "API"
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase URL und Anon Key müssen in den Umgebungsvariablen gesetzt werden')
@@ -60,4 +61,6 @@ export const deleteImage = async (path: string) => {
     console.error('Fehler beim Löschen des Bildes:', error)
     throw error
   }
+  
 }
+

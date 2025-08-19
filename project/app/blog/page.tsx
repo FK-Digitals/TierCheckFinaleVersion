@@ -21,9 +21,16 @@ export default function BlogPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const posts = getBlogPosts().filter(post => post.status === 'published');
-    setAllBlogPosts(posts);
-  }, []);
+  let mounted = true;
+
+  (async () => {
+    const all = await getBlogPosts();
+    const published = all.filter((post: BlogPost) => post.status === 'published');
+    if (mounted) setAllBlogPosts(published);
+  })();
+
+    return () => { mounted = false; };
+}, []);
 
   const filteredPosts = allBlogPosts.filter(post => {
     const matchesCategory = selectedCategory === 'Alle' || 
