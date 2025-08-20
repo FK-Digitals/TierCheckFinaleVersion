@@ -3,38 +3,49 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Calendar, User, Heart, MessageCircle, Share2, ArrowRight } from 'lucide-react';
+import { Calendar, User, Share2, ArrowRight } from 'lucide-react';
 import { getBlogPosts, type BlogPost, getAnimalTypes } from '../lib/blogData';
 
 export default function BlogSection() {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('Alle');
   const [animalTypes, setAnimalTypes] = useState<any[]>([]);
 
   useEffect(() => {
-    const posts = getBlogPosts().filter(post => post.status === 'published');
-    setBlogPosts(posts);
-    const types = getAnimalTypes();
-    setAnimalTypes(types);
+    let alive = true;
+    (async () => {
+      const posts = (await getBlogPosts()).filter(p => p.status === 'published');
+      if (alive) setBlogPosts(posts);
+
+      const typesMaybe = getAnimalTypes() as any;
+      const types =
+        typeof typesMaybe?.then === 'function'
+          ? await (typesMaybe as Promise<any[]>)
+          : (typesMaybe as any[]);
+      if (alive) setAnimalTypes(types);
+    })();
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  const categories = ['Alle', ...animalTypes.map(type => type.name)];
+  const categories = ['Alle', ...animalTypes.map(t => t.name)];
 
-  const filteredPosts = blogPosts.filter(post => {
-    if (selectedCategory === 'Alle') return true;
-    
-    // Check if post matches selected animal type
-    const selectedAnimalType = animalTypes.find(type => type.name === selectedCategory);
-    if (selectedAnimalType) {
-      return post.animalType === selectedAnimalType.name ||
-             post.title.toLowerCase().includes(selectedAnimalType.name.toLowerCase().slice(0, -1)) ||
-             post.excerpt.toLowerCase().includes(selectedAnimalType.name.toLowerCase().slice(0, -1));
-    }
-    
-    return false;
-  }).slice(0, 4);
+  const filteredPosts = blogPosts
+    .filter(post => {
+      if (selectedCategory === 'Alle') return true;
+      const sel = animalTypes.find(t => t.name === selectedCategory);
+      if (!sel) return false;
+      const key = sel.name?.toLowerCase();
+      return (
+        post.animalType === sel.name ||
+        post.title.toLowerCase().includes(key.slice(0, -1)) ||
+        post.excerpt.toLowerCase().includes(key.slice(0, -1))
+      );
+    })
+    .slice(0, 4);
 
   return (
     <section ref={ref} className="py-20 bg-gradient-to-b from-amber-100 to-orange-100 -mt-1">
@@ -53,22 +64,20 @@ export default function BlogSection() {
             <span className="text-2xl">📝</span>
             <span className="text-orange-800 font-semibold">TierCheck Stories</span>
           </motion.div>
-          
+
           <h2 className="text-4xl md:text-5xl font-bold text-orange-900 mb-4">
             Unsere neuesten
             <motion.span
               className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent ml-3"
-              animate={{ 
-                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-              }}
+              animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
               transition={{ duration: 3, repeat: Infinity }}
             >
               Blog-Artikel
             </motion.span>
           </h2>
-          
+
           <p className="text-base sm:text-lg md:text-xl text-orange-800 max-w-3xl mx-auto">
-            Entdecke spannende Artikel, hilfreiche Ratgeber und inspirierende Geschichten 
+            Entdecke spannende Artikel, hilfreiche Ratgeber und inspirierende Geschichten
             rund um das Leben mit Haustieren.
           </p>
         </motion.div>
@@ -86,17 +95,14 @@ export default function BlogSection() {
               onClick={() => setSelectedCategory(category)}
               className={`px-6 py-3 rounded-full font-medium transition-all duration-300 ${
                 selectedCategory === category
-                  ? 'bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-lg transform scale-105' 
+                  ? 'bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-lg transform scale-105'
                   : 'bg-white/80 text-orange-800 hover:bg-white/95 border border-orange-300'
               }`}
-              whileHover={{ scale: selectedCategory === category ? 1.05 : 1.05, y: -2 }}
+              whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
             >
-              {/* Show icon for animal types */}
-              {index > 0 && animalTypes.find(type => type.name === category) && (
-                <span className="mr-2">
-                  {animalTypes.find(type => type.name === category)?.icon}
-                </span>
+              {index > 0 && animalTypes.find(t => t.name === category) && (
+                <span className="mr-2">{animalTypes.find(t => t.name === category)?.icon}</span>
               )}
               {category}
             </motion.button>
@@ -122,7 +128,7 @@ export default function BlogSection() {
                   className="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
+
                 {/* Category Badge */}
                 <motion.div
                   className="absolute top-4 left-4 bg-gradient-to-r from-orange-600 to-red-600 text-white px-3 py-1 rounded-full text-sm font-semibold"
@@ -159,9 +165,7 @@ export default function BlogSection() {
                 </h3>
 
                 {/* Excerpt */}
-                <p className="text-orange-800 mb-4 line-clamp-3">
-                  {post.excerpt}
-                </p>
+                <p className="text-orange-800 mb-4 line-clamp-3">{post.excerpt}</p>
 
                 {/* Actions */}
                 <div className="flex items-center justify-between">
@@ -170,14 +174,12 @@ export default function BlogSection() {
                       onClick={() => {
                         const shareUrl = `${window.location.origin}/blog/${post.slug}`;
                         if (navigator.share) {
-                          navigator.share({
-                            title: post.title,
-                            text: post.excerpt,
-                            url: shareUrl,
-                          }).catch(console.error);
+                          navigator
+                            .share({ title: post.title, text: post.excerpt, url: shareUrl })
+                            .catch(console.error);
                         } else {
-                          // Fallback: copy link to clipboard
-                          navigator.clipboard.writeText(shareUrl)
+                          navigator.clipboard
+                            .writeText(shareUrl)
                             .then(() => alert('Link kopiert!'))
                             .catch(() => alert('Fehler beim Kopieren des Links'));
                         }
