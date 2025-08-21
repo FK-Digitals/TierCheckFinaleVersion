@@ -1,8 +1,6 @@
-// app/sitemap.ts
 import type { MetadataRoute } from 'next'
 import { getBlogPosts } from './lib/blogData'
 
-// verhindert Prerendering beim Build
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
@@ -13,7 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     blogPosts = (await getBlogPosts()).filter((p) => p.status === 'published')
   } catch {
-    blogPosts = [] // bei Fetch-Fehlern nicht failen
+    blogPosts = []
   }
 
   const staticPages: MetadataRoute.Sitemap = [

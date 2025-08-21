@@ -1,29 +1,43 @@
-// project/middleware.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Login-Seite IMMER durchlassen
-  if (pathname.startsWith('/admin/login')) return NextResponse.next()
+  // /admin/login freigeben, nur /admin schützen
+  if (!pathname.startsWith('/admin') || pathname.startsWith('/admin/login')) {
+    return NextResponse.next()
+  }
 
-  // Nur /admin schützen
-  if (!pathname.startsWith('/admin')) return NextResponse.next()
+  const res = NextResponse.next()
 
-  const hasSb =
-    req.cookies.get('sb-access-token') ||
-    req.cookies.get('sb:token') ||
-    req.cookies.get('supabase-auth-token')
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return req.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          res.cookies.set(name, value, options)
+        },
+        remove(name: string, options: CookieOptions) {
+          res.cookies.set(name, '', { ...options, maxAge: 0 })
+        },
+      },
+    }
+  )
 
-  if (!hasSb) {
+  const { data } = await supabase.auth.getUser()
+  if (!data.user) {
     const url = req.nextUrl.clone()
     url.pathname = '/admin/login'
     return NextResponse.redirect(url)
   }
-  return NextResponse.next()
+
+  return res
 }
 
-export const config = {
-  matcher: ['/admin/:path*'],
-}
+export const config = { matcher: ['/admin/:path*'] }

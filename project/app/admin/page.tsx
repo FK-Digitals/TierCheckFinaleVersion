@@ -1,3 +1,8 @@
 export default function AdminPage() {
-  return <div className="p-8">Admin Bereich – nur für Berechtigte</div>
+  return (
+    <div className="p-8">
+      <h1 className="text-2xl font-bold">Admin Bereich</h1>
+      <p>Nur für berechtigte Benutzer zugänglich.</p>
+    </div>
+  )
 }
