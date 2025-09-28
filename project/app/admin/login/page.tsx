@@ -2,44 +2,46 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function AdminLogin() {
-  const [user, setUser] = useState('')
-  const [pass, setPass] = useState('')
-  const [error, setError] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (
-      user === process.env.NEXT_PUBLIC_ADMIN_USER &&
-      pass === process.env.NEXT_PUBLIC_ADMIN_PASS
-    ) {
-      document.cookie = `auth_token=ok; path=/`
-      router.push('/admin')
-    } else {
-      setError('Ungültige Anmeldedaten')
+    setError(null)
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      setError(error.message)
+      return
     }
+    // Supabase-Session ist jetzt gesetzt -> Middleware lässt /admin durch
+    router.replace('/admin')
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-8 max-w-sm mx-auto">
-      <h1 className="text-xl mb-4">Admin Login</h1>
-      {error && <p className="text-red-500">{error}</p>}
+    <form onSubmit={handleSubmit} className="max-w-sm mx-auto mt-16 space-y-3">
+      <h1 className="text-xl font-semibold">Admin Login</h1>
+      {error && <p className="text-red-600">{error}</p>}
       <input
-        className="border p-2 w-full mb-2"
-        placeholder="Benutzername"
-        value={user}
-        onChange={(e) => setUser(e.target.value)}
+        className="border p-2 w-full"
+        placeholder="E-Mail"
+        type="email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
       />
       <input
-        type="password"
-        className="border p-2 w-full mb-2"
+        className="border p-2 w-full"
         placeholder="Passwort"
-        value={pass}
-        onChange={(e) => setPass(e.target.value)}
+        type="password"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
       />
-      <button className="bg-blue-600 text-white px-4 py-2">Login</button>
+      <button className="bg-blue-600 text-white px-4 py-2 w-full">Login</button>
     </form>
   )
 }
