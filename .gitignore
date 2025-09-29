@@ -1,0 +1,6 @@
+
+# Build & env
+.next/
+node_modules/
+.env.local
+project/env.local
