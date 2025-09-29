@@ -18,44 +18,38 @@ import {
 const features = [
   {
     icon: MessageSquare,
-    title: "Erfahrungsberichte & Tipps",
-    description:
-      "Inhalte basieren auf persönlichen Erfahrungen und sorgfältiger Recherche – ideal für Tierfreunde, die praxisnahe Ratschläge suchen.",
+    title: "Expertenwissen",
+    description: "Fundierte Artikel von Tierärzten, Verhaltensexperten und erfahrenen Haustierbesitzern mit praktischen Tipps.",
     color: "from-slate-600 to-gray-700",
   },
   {
     icon: Sparkles,
-    title: "Neue Inhalte jede Woche",
-    description:
-      "Wöchentlich frische Blogbeiträge mit spannenden Themen rund um Haustiere.",
+    title: "Regelmäßige neue Artikel",
+    description: "Wöchentlich neue Blog-Artikel und Ratgeber rund um das Leben mit Haustieren.",
     color: "from-amber-600 to-orange-600",
   },
   {
     icon: Brain,
-    title: "Gut recherchiert",
-    description:
-      "Alle Inhalte beruhen auf öffentlich zugänglichen Informationen und seriösen Quellen – leicht verständlich aufbereitet.",
+    title: "Wissenschaftlich fundiert",
+    description: "Alle Artikel basieren auf aktuellen wissenschaftlichen Erkenntnissen und bewährten Praktiken.",
     color: "from-blue-600 to-indigo-600",
   },
   {
     icon: Heart,
-    title: "Vielfalt an Themen",
-    description:
-      "Von Hunden und Katzen bis zu Vögeln und Reptilien – hier ist für jeden Tierfreund etwas dabei.",
+    title: "Verschiedene Tierarten",
+    description: "Von Hunden und Katzen bis zu Vögeln und Reptilien - für jeden Tierliebhaber ist etwas dabei.",
     color: "from-green-500 to-emerald-500",
   },
   {
     icon: Users,
-    title: "Alltagstipps",
-    description:
-      "Hilfreiche Anleitungen und Ideen für Pflege, Erziehung und Beschäftigung deiner Tiere.",
+    title: "Praktische Ratgeber",
+    description: "Hilfreiche Anleitungen und Tipps für die tägliche Pflege, Erziehung und Gesundheit deiner Tiere.",
     color: "from-teal-600 to-cyan-600",
   },
   {
     icon: Shield,
-    title: "Kostenlos & frei zugänglich",
-    description:
-      "Alle Artikel sind jederzeit kostenlos verfügbar – für jeden Tierfreund.",
+    title: "Kostenlos & Werbefrei",
+    description: "Alle Inhalte sind komplett kostenlos und ohne störende Werbung für ein optimales Leseerlebnis.",
     color: "from-gray-600 to-slate-700",
   }
 ];

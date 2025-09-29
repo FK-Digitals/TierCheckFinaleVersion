@@ -1,12 +1,12 @@
 import { supabase } from '@/lib/supabaseClient';
 
 export interface BlogPost {
-  id: string;               // UUID from DB
+  id: string;
   title: string;
   excerpt: string;
   content: string;
   author: string | null;
-  date: string;             // ISO string
+  date: string;
   category: string;
   image: string;
   status: 'draft' | 'published';
