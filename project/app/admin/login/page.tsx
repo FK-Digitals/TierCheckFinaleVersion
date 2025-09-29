@@ -67,6 +67,18 @@ function AdminPageContent() {
   readTime: '5 min',
   affiliateProducts: []
 });
+
+const handleLogout = async () => {
+    try { await supabase.auth.signOut(); } catch {}
+    try {
+      localStorage.removeItem('adminAuth');
+      localStorage.removeItem('adminLoginTime');
+      localStorage.removeItem('currentUser');
+    } catch {}
+    window.dispatchEvent(new Event('tiercheck:auth-changed'));
+    router.replace('/admin/login?logout=1');
+  };
+
   const [editingProductIndex, setEditingProductIndex] = useState<number | null>(null);
   const [formData2, setFormData2] = useState({
     title: '',
@@ -495,18 +507,6 @@ const updateAffiliateProduct = () => {
     localStorage.setItem('adminUsers', JSON.stringify(updatedUsers));
   };
 
-  const handleLogout = async () => {
-  try { await supabase.auth.signOut(); } catch {}
-  try {
-    localStorage.removeItem('adminAuth');
-    localStorage.removeItem('adminLoginTime');
-    localStorage.removeItem('currentUser');
-  } catch {}
-  window.dispatchEvent(new Event('tiercheck:auth-changed'));
-  window.location.href = '/admin/login?logout=1';
-};
-
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-100 to-amber-100">
       {/* Header */}
@@ -531,13 +531,13 @@ const updateAffiliateProduct = () => {
               />
               <span className="text-xl font-bold text-orange-800">Tier-Check Admin</span>
               <motion.button
-  type="button"
-  onClick={handleLogout}
-  className="ml-4 px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
-  whileHover={{ scale: 1.05 }}
->
-  Abmelden
-</motion.button>
+                type="button"
+                onClick={handleLogout}
+                className="ml-4 px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+                whileHover={{ scale: 1.05 }}
+              >
+                Abmelden
+              </motion.button>
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient  } from '@supabase/ssr';
 
 const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -8,7 +8,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 function makeClient() {
-  return createClient(supabaseUrl, supabaseAnonKey, {
+  return createBrowserClient (supabaseUrl, supabaseAnonKey, {
     auth: {
       storageKey: 'tiercheck-auth',
       persistSession: true,

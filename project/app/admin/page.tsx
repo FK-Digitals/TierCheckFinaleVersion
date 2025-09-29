@@ -1,11 +1,13 @@
 'use client';
 
+import { supabase } from '@/lib/supabaseClient';
 import AdminAuth from '../components/AdminAuth';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { createBrowserClient } from '@supabase/ssr';
 
-// nutze den Pfad-Alias, damit TS die Module sicher findet
+
 import type { BlogPost, AffiliateProduct, AnimalType } from '@/app/lib/blogData';
 import { fetchPosts, createPost, updatePost, deletePost } from '@/app/lib/blogApi';
 import { getAnimalTypes } from '@/app/lib/blogData';
@@ -28,7 +30,17 @@ function AdminPageContent() {
   const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
 
-  // WICHTIG: BlogPost verlangt ein "date" Feld → hier default setzen
+  const handleLogout = async () => {
+  try { await supabase.auth.signOut(); } catch {}
+  try {
+    localStorage.removeItem('adminAuth');
+    localStorage.removeItem('adminLoginTime');
+    localStorage.removeItem('currentUser');
+  } catch {}
+  window.dispatchEvent(new Event('tiercheck:auth-changed'));
+  router.replace('/admin/login?logout=1');
+};
+
   const [formData, setFormData] = useState<Omit<BlogPost, 'id' | 'likes' | 'comments'>>({
     title: '',
     excerpt: '',
