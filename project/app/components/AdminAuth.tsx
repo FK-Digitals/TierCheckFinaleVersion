@@ -16,42 +16,40 @@ export default function AdminAuth({ children }: AdminAuthProps) {
   const pathname = usePathname();
 
   useEffect(() => {
-    const checkAuth = () => {
-      console.log('🔍 Checking authentication...');
-      
-      const adminAuth = localStorage.getItem('adminAuth');
-      const loginTime = localStorage.getItem('adminLoginTime');
-      
-      console.log('📝 adminAuth:', adminAuth);
-      console.log('⏰ loginTime:', loginTime);
-      
-      if (adminAuth === 'true' && loginTime) {
-        // Check if login is still valid (24 hours)
-        const loginTimestamp = parseInt(loginTime);
-        const currentTime = Date.now();
-        const twentyFourHours = 24 * 60 * 60 * 1000;
-        
-        if (currentTime - loginTimestamp < twentyFourHours) {
-          console.log('✅ User is authenticated and session is valid');
-          setIsAuthenticated(true);
-        } else {
-          console.log('⏰ Session expired, clearing auth');
-          localStorage.removeItem('adminAuth');
-          localStorage.removeItem('adminLoginTime');
-          setIsAuthenticated(false);
-        }
-      } else {
-        console.log('❌ User is not authenticated');
-        setIsAuthenticated(false);
+  const checkAuth = () => {
+    const adminAuth = localStorage.getItem('adminAuth');
+    const loginTime = localStorage.getItem('adminLoginTime');
+
+    if (adminAuth === 'true' && loginTime) {
+      const valid = Date.now() - parseInt(loginTime, 10) < 24 * 60 * 60 * 1000;
+      if (!valid) {
+        localStorage.removeItem('adminAuth');
+        localStorage.removeItem('adminLoginTime');
       }
-      
-      // Set loading to false after authentication check is complete
-      setIsLoading(false);
+      setIsAuthenticated(valid);
+    } else {
+      setIsAuthenticated(false);
     }
-    // Small delay to ensure proper hydration
-    const timer = setTimeout(checkAuth, 100);
-    return () => clearTimeout(timer);
-  }, []);
+    setIsLoading(false);
+  };
+
+  // sofort prüfen
+  checkAuth();
+
+  // auf Änderungen reagieren (Logout-Event, anderer Tab, Fokus, Sichtbarkeit)
+  const onAuthChanged = () => checkAuth();
+  window.addEventListener('tiercheck:auth-changed', onAuthChanged);
+  window.addEventListener('storage', onAuthChanged);
+  window.addEventListener('focus', onAuthChanged);
+  document.addEventListener('visibilitychange', onAuthChanged);
+
+  return () => {
+    window.removeEventListener('tiercheck:auth-changed', onAuthChanged);
+    window.removeEventListener('storage', onAuthChanged);
+    window.removeEventListener('focus', onAuthChanged);
+    document.removeEventListener('visibilitychange', onAuthChanged);
+  };
+}, []);
 
   // Redirect to login if not authenticated
   useEffect(() => {

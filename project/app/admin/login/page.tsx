@@ -1,6 +1,7 @@
 'use client';
 
 import AdminAuth from '@/app/components/AdminAuth';
+import { supabase } from '@/lib/supabaseClient';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -114,21 +115,28 @@ function AdminPageContent() {
 
   // Load posts on component mount
 useEffect(() => {
-  (async () => {
-    const allPosts = await getBlogPosts();   // vorher: getBlogPosts()
-    setPosts(allPosts);
-    const types = await getAnimalTypes();    // vorher: getAnimalTypes()
-    setAnimalTypes(types);
+  let isMounted = true;
 
-    const user = localStorage.getItem('currentUser');
-    if (user) {
-      try { setCurrentUser(JSON.parse(user)); } catch {}
-    }
-    const savedUsers = localStorage.getItem('adminUsers');
-    if (savedUsers) {
-      try { setUsers(JSON.parse(savedUsers)); } catch {}
-    }
+  (async () => {
+    try {
+      const [allPosts, types] = await Promise.all([
+        getBlogPosts().catch(() => []),   // Fallback, falls Tabelle fehlt
+        getAnimalTypes().catch(() => []),
+      ]);
+      if (!isMounted) return;
+      setPosts(allPosts);
+      setAnimalTypes(types);
+    } catch {}
+
+    try {
+      const user = localStorage.getItem('currentUser');
+      if (user && isMounted) setCurrentUser(JSON.parse(user));
+      const savedUsers = localStorage.getItem('adminUsers');
+      if (savedUsers && isMounted) setUsers(JSON.parse(savedUsers));
+    } catch {}
   })();
+
+  return () => { isMounted = false; };
 }, []);
 
   const categories = ['Ernährung', 'Training', 'Haltung', 'Pflege', 'Gesundheit', 'Ratgeber'];
@@ -487,6 +495,18 @@ const updateAffiliateProduct = () => {
     localStorage.setItem('adminUsers', JSON.stringify(updatedUsers));
   };
 
+  const handleLogout = async () => {
+  try { await supabase.auth.signOut(); } catch {}
+  try {
+    localStorage.removeItem('adminAuth');
+    localStorage.removeItem('adminLoginTime');
+    localStorage.removeItem('currentUser');
+  } catch {}
+  window.dispatchEvent(new Event('tiercheck:auth-changed'));
+  window.location.href = '/admin/login?logout=1';
+};
+
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-100 to-amber-100">
       {/* Header */}
@@ -511,17 +531,13 @@ const updateAffiliateProduct = () => {
               />
               <span className="text-xl font-bold text-orange-800">Tier-Check Admin</span>
               <motion.button
-                onClick={() => {
-                  localStorage.removeItem('adminAuth');
-                  localStorage.removeItem('adminLoginTime');
-                  localStorage.removeItem('currentUser');
-                  window.location.replace('/admin/login');
-                }}
-                className="ml-4 px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
-                whileHover={{ scale: 1.05 }}
-              >
-                Abmelden
-              </motion.button>
+  type="button"
+  onClick={handleLogout}
+  className="ml-4 px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+  whileHover={{ scale: 1.05 }}
+>
+  Abmelden
+</motion.button>
             </div>
           </div>
 
@@ -539,17 +555,13 @@ const updateAffiliateProduct = () => {
                   </div>
                 </div>
                 <motion.button
-                  onClick={() => {
-                    localStorage.removeItem('adminAuth');
-                    localStorage.removeItem('adminLoginTime');
-                    localStorage.removeItem('currentUser');
-                    window.location.replace('/admin/login');
-                  }}
-                  className="text-orange-600 hover:text-orange-800 font-medium"
-                  whileHover={{ scale: 1.05 }}
-                >
-                  Abmelden
-                </motion.button>
+  type="button"
+  onClick={handleLogout}
+  className="ml-4 px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+  whileHover={{ scale: 1.05 }}
+>
+  Abmelden
+</motion.button>
               </div>
             </div>
           )}
