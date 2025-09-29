@@ -1,11 +1,11 @@
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from 'lib/supabaseClient';
 
 export interface BlogPost {
   id: string;
   title: string;
   excerpt: string;
   content: string;
-  author: string | null;
+  author: string;
   date: string;
   category: string;
   image: string;
@@ -48,7 +48,7 @@ const mapFromDb = (row: any): BlogPost => ({
   title: row.title,
   excerpt: row.excerpt ?? '',
   content: row.content ?? '',
-  author: row.author ?? null,
+  author: row.author ?? '',                           // <- nie null
   date: row.created_at ?? row.date ?? new Date().toISOString(),
   category: row.category ?? '',
   image: row.image ?? '',
@@ -61,8 +61,8 @@ const mapFromDb = (row: any): BlogPost => ({
   animalType: row.animal_type ?? undefined,
 });
 
+
 const mapToDb = (p: BlogPost) => ({
-  id: p.id,
   title: p.title,
   excerpt: p.excerpt,
   content: p.content,
@@ -97,7 +97,6 @@ export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | null> 
   return data ? mapFromDb(data) : null;
 };
 
-// Accepts a full array for backward compatibility. Performs upsert by slug.
 export const saveBlogPosts = async (posts: BlogPost[]): Promise<void> => {
   if (!Array.isArray(posts) || posts.length === 0) return;
   const upserts = posts.map(mapToDb);
@@ -107,7 +106,6 @@ export const saveBlogPosts = async (posts: BlogPost[]): Promise<void> => {
   if (error) throw error;
 };
 
-// Animal types stored in table animal_types
 export const getAnimalTypes = async (): Promise<AnimalType[]> => {
   const { data, error } = await supabase
     .from('animal_types')
@@ -120,7 +118,10 @@ export const getAnimalTypes = async (): Promise<AnimalType[]> => {
 export const saveAnimalTypes = async (types: AnimalType[]): Promise<void> => {
   const { error } = await supabase
     .from('animal_types')
-    .upsert(types.map(t => ({ id: t.id, name: t.name, icon: t.icon, color: t.color })), { onConflict: 'id' });
+    .upsert(
+      types.map(t => ({ id: t.id, name: t.name, icon: t.icon, color: t.color })),
+      { onConflict: 'id' }
+    );
   if (error) throw error;
 };
 

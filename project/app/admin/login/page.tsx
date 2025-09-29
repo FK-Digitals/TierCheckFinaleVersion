@@ -514,7 +514,8 @@ const updateAffiliateProduct = () => {
                 onClick={() => {
                   localStorage.removeItem('adminAuth');
                   localStorage.removeItem('adminLoginTime');
-                  window.location.href = '/admin/login';
+                  localStorage.removeItem('currentUser');
+                  window.location.replace('/admin/login');
                 }}
                 className="ml-4 px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
                 whileHover={{ scale: 1.05 }}
@@ -542,7 +543,7 @@ const updateAffiliateProduct = () => {
                     localStorage.removeItem('adminAuth');
                     localStorage.removeItem('adminLoginTime');
                     localStorage.removeItem('currentUser');
-                    window.location.href = '/admin/login';
+                    window.location.replace('/admin/login');
                   }}
                   className="text-orange-600 hover:text-orange-800 font-medium"
                   whileHover={{ scale: 1.05 }}

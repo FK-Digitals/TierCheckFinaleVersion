@@ -23,7 +23,7 @@ export default function AdminPage() {
 function AdminPageContent() {
   const router = useRouter();
 
-  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [blog_posts, setPosts] = useState<BlogPost[]>([]);
   const [showEditor, setShowEditor] = useState(false);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
@@ -173,9 +173,9 @@ const handleSubmit = async (e: React.FormEvent) => {
 
       {/* Artikelliste */}
       <div className="bg-white rounded-lg shadow-lg p-4">
-        <h2 className="text-xl font-semibold mb-4">Alle Artikel ({posts.length})</h2>
+        <h2 className="text-xl font-semibold mb-4">Alle Artikel ({blog_posts.length})</h2>
         <ul>
-          {posts.map((post) => (
+          {blog_posts.map((post) => (
             <li key={post.id} className="flex justify-between items-center border-b py-2">
               <div>
                 <strong>{post.title}</strong>

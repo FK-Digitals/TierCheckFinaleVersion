@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Lock, Loader } from 'lucide-react';
 
@@ -13,6 +13,7 @@ export default function AdminAuth({ children }: AdminAuthProps) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const checkAuth = () => {
@@ -77,31 +78,31 @@ export default function AdminAuth({ children }: AdminAuthProps) {
   }
 
   // Show access denied if not authenticated
-  if (isAuthenticated === false) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-orange-100 to-amber-100 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-2xl p-8 text-center max-w-md"
+  if (isAuthenticated === false && pathname !== '/admin/login') {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-orange-100 to-amber-100 flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-xl shadow-2xl p-8 text-center max-w-md"
+      >
+        <Lock className="mx-auto mb-4 text-red-600" size={48} />
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Zugriff verweigert</h2>
+        <p className="text-gray-600 mb-6">
+          Du musst dich als Administrator anmelden, um auf diesen Bereich zuzugreifen.
+        </p>
+        <motion.button
+          onClick={() => router.push('/admin/login')}
+          className="bg-gradient-to-r from-orange-600 to-red-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <Lock className="mx-auto mb-4 text-red-600" size={48} />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Zugriff verweigert</h2>
-          <p className="text-gray-600 mb-6">
-            Du musst dich als Administrator anmelden, um auf diesen Bereich zuzugreifen.
-          </p>
-          <motion.button
-            onClick={() => router.push('/admin/login')}
-            className="bg-gradient-to-r from-orange-600 to-red-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Zur Anmeldung
-          </motion.button>
-        </motion.div>
-      </div>
-    );
-  }
+          Zur Anmeldung
+        </motion.button>
+      </motion.div>
+    </div>
+  );
+}
 
   // Only render children if authenticated
   return <>{children}</>;
