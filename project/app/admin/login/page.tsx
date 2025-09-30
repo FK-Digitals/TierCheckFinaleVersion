@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -8,6 +8,27 @@ import { supabase } from '@/lib/supabaseClient';
 import { LogIn, Mail, Lock, ArrowLeft } from 'lucide-react';
 
 export default function AdminLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-b from-orange-100 to-amber-100">
+          <div className="bg-gradient-to-r from-orange-200 to-amber-200 py-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8" />
+          </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div className="mx-auto w-full max-w-md">
+              <div className="bg-white rounded-xl shadow-lg p-8 animate-pulse h-80" />
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -18,7 +39,7 @@ export default function AdminLoginPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Info-Meldung, wenn von /admin/logout o.ä. gekommen
+  // Info-Meldung, wenn von Logout gekommen
   useEffect(() => {
     if (searchParams.get('logout') === '1') {
       setInfo('Du wurdest erfolgreich abgemeldet.');
